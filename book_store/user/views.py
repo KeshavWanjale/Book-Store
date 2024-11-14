@@ -14,7 +14,7 @@ from loguru import logger
 
 class RegisterUser(APIView):
 
-    @swagger_auto_schema(operation_description="register user", request_body=UserRegistrationSerializer)
+    @swagger_auto_schema(operation_description="Register User", request_body=UserRegistrationSerializer)
     def post(self, request):
         """
         Description:
@@ -56,7 +56,7 @@ class RegisterUser(APIView):
 
 class LoginUser(APIView):
 
-    @swagger_auto_schema(operation_description="user login", request_body=UserLoginSerializer)
+    @swagger_auto_schema(operation_description="User Login", request_body=UserLoginSerializer)
     def post(self, request):
         """
         Description:
