@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'django_celery_results',
 
     'user',
+    'book',
     
 ]
 
@@ -189,3 +190,34 @@ LOGURU_SETTINGS = {
 # Apply the Loguru settings
 for handler in LOGURU_SETTINGS["handlers"]:
     logger.add(**handler)
+
+
+# JWT AUTHENTICATION SETTINGS
+from datetime import timedelta
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+}
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
+    'SLIDING_TOKEN_LIFETIME': timedelta(days=30),
+    'SLIDING_TOKEN_REFRESH_LIFETIME_LATE_USER': timedelta(days=1),
+    'SLIDING_TOKEN_LIFETIME_LATE_USER': timedelta(days=30),
+}
+
+SWAGGER_SETTINGS = {
+   'SECURITY_DEFINITIONS': {
+      'Bearer': {
+            'type': 'apiKey',
+            'name': 'Authorization',
+            'in': 'header'
+      },
+   },
+   'USE_SESSION_AUTH': False
+}

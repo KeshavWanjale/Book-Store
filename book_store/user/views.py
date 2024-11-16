@@ -5,14 +5,16 @@ from .serializers import UserRegistrationSerializer, UserLoginSerializer
 from django.contrib.auth import authenticate
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 from .models import CustomUser
 from rest_framework.reverse import reverse
 from .tasks import send_verification_mail
 from loguru import logger
-
+from rest_framework.permissions import AllowAny
 
 class RegisterUser(APIView):
+
+    permission_classes = [AllowAny]
 
     @swagger_auto_schema(operation_description="Register User", request_body=UserRegistrationSerializer)
     def post(self, request):
@@ -56,6 +58,8 @@ class RegisterUser(APIView):
 
 class LoginUser(APIView):
 
+    permission_classes = [AllowAny]
+
     @swagger_auto_schema(operation_description="User Login", request_body=UserLoginSerializer)
     def post(self, request):
         """
@@ -94,6 +98,7 @@ class LoginUser(APIView):
             return Response({"message": "An internal error occurred", "status": "error", "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+@permission_classes([AllowAny])
 @api_view(['GET'])
 def verify_registered_user(request, token):
     """
