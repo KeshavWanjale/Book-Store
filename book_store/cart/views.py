@@ -260,7 +260,7 @@ class OrderViewsByID(APIView):
     def delete(self,request,pk):
         
         try:
-            ordered_cart = CartModel.objects.filter(user=request.user, is_ordered=True, id=pk)
+            ordered_cart = CartModel.objects.filter(user=request.user, is_ordered=True, id=pk).first()
             if not ordered_cart:
                 logger.error("No order found to cancel.")
                 return Response({"message": "No order found to cancel."}, status=status.HTTP_404_NOT_FOUND)
