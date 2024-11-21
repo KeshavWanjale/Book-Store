@@ -98,8 +98,8 @@ class LoginUser(APIView):
             return Response({"message": "An internal error occurred", "status": "error", "error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-@permission_classes([AllowAny])
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def verify_registered_user(request, token):
     """
     Description:

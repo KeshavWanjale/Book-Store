@@ -258,15 +258,7 @@ class OrderViewsByID(APIView):
     
     @swagger_auto_schema(operation_summary="Cancel an order")
     def delete(self,request,pk):
-        """
-        Description:
-            Cancels a specific order placed by the authenticated user.
-        Parameters:
-            request (Request): The request object from the authenticated user.
-            pk (int): The primary key of the order to be cancelled.
-        Returns:
-            Response: A response indicating success or failure of the cancellation.
-        """
+        
         try:
             ordered_cart = CartModel.objects.filter(user=request.user, is_ordered=True, id=pk)
             if not ordered_cart:
