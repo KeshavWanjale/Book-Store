@@ -1,7 +1,7 @@
 from rest_framework import viewsets
 from .models import Book
 from .serializers import BookSerializer
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.response import Response
 from rest_framework import status
@@ -31,6 +31,12 @@ class BookViewset(viewsets.ModelViewSet):
 
     permission_classes = [IsAuthenticated]
     authentication_classes = [JWTAuthentication]
+
+    def get_permissions(self):
+        """Override to set custom permissions for list and retrieve actions."""
+        if self.action in ['list', 'retrieve']:
+            return [AllowAny()]  # Allow any user to list or retrieve books
+        return super().get_permissions()  # Default permissions for other actions
 
     @swagger_auto_schema(operation_description="List Books")   
     def list(self, request, *args, **kwargs):
