@@ -83,7 +83,10 @@ class LoginUser(APIView):
                     return Response({
                         "message": "Login successful!", 
                         "status": "success", 
-                        "data": serializer.data,
+                        "data": {
+                            "email": user.email,
+                            "username": user.username,
+                        },
                         'refresh': str(refresh),
                         'access': str(refresh.access_token),
                     })

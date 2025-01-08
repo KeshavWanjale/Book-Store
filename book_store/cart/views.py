@@ -133,6 +133,112 @@ class CartsViewsByID(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
+    @swagger_auto_schema(
+        operation_summary="Update the quantity of an item in the cart",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'new_quantity': openapi.Schema(
+                    type=openapi.TYPE_INTEGER,
+                    description='New quantity for the item',
+                ),
+            },
+            required=['new_quantity'],
+        ),
+    )
+    def put(self, request, pk=None, *args, **kwargs):
+        """
+        Update the quantity of an item in the user's active cart.
+        """
+        try:
+            # Fetch the new quantity from the request payload
+            new_quantity = request.data.get('new_quantity')
+
+            if not new_quantity or not isinstance(new_quantity, int) or new_quantity < 1:
+                logger.error("Invalid or missing 'new_quantity' in the request payload.")
+                return Response(
+                    {"message": "'new_quantity' must be a positive integer."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # Get or create the active cart for the user
+            active_cart, cart_created = CartModel.objects.get_or_create(user=request.user, is_ordered=False)
+
+            # If the cart is newly created, create the cart item with the specified quantity
+            if cart_created:
+                try:
+                    book = Book.objects.get(id=pk)
+                except Book.DoesNotExist:
+                    logger.error(f"Book with ID {pk} does not exist.")
+                    return Response(
+                        {"message": f"Book with ID {pk} does not exist."},
+                        status=status.HTTP_404_NOT_FOUND,
+                    )
+
+                if book.stock < new_quantity:
+                    logger.error(f"Insufficient stock for book ID {pk}.")
+                    return Response(
+                        {"message": f"Insufficient stock. Only {book.stock} available."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+                # Create a new cart item
+                cart_item = CartItems.objects.create(
+                    cart=active_cart,
+                    book=book,
+                    quantity=new_quantity,
+                    price=book.price * new_quantity,
+                )
+            else:
+                # Get the cart item
+                try:
+                    cart_item = CartItems.objects.get(cart=active_cart, book_id=pk)
+                except CartItems.DoesNotExist:
+                    logger.error(f"Item with ID {pk} not found in the active cart.")
+                    return Response(
+                        {"message": f"Item with ID {pk} not found in the active cart."},
+                        status=status.HTTP_404_NOT_FOUND,
+                    )
+
+                # Check if sufficient stock is available
+                book = cart_item.book
+                if book.stock < new_quantity:
+                    logger.error(f"Insufficient stock for book ID {pk}.")
+                    return Response(
+                        {"message": f"Insufficient stock. Only {book.stock} available."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+                # Update the cart item
+                cart_item.quantity = new_quantity
+                cart_item.price = book.price * new_quantity
+                cart_item.save()
+
+            # Update the cart totals
+            totals = CartItems.objects.filter(cart=active_cart).aggregate(
+                total_quantity=models.Sum('quantity'),
+                total_price=models.Sum('price'),
+            )
+            active_cart.total_quantity = totals['total_quantity'] or 0
+            active_cart.total_price = totals['total_price'] or 0
+            active_cart.save()
+
+            logger.info(f"Cart item with ID {pk} updated successfully.")
+            return Response(
+                {"message": "Cart item updated successfully."},
+                status=status.HTTP_200_OK,
+            )
+
+        except Exception as e:
+            logger.error(f"An unexpected error occurred: {str(e)}")
+            return Response(
+                {
+                    "message": "An error occurred while updating the cart item.",
+                    "error": str(e),
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+    
     @swagger_auto_schema(operation_summary="Delete the active cart")
     def delete(self, request, pk=None, *args, **kwargs):
         """
